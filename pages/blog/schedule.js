@@ -7,7 +7,11 @@ import PostBody from 'components/post-body'
 import { TwoColumn, TwoColumnMain, TwoColumnSidebar } from 'components/two-column'
 import ConvertBody from 'components/convert-body'
 import PostCategories from 'components/post-categories'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
+import { getPlaiceholder } from 'plaiceholder'
+
+// ローカルの代替アイキャッチ画像
+import { eyecatchLocal } from 'lib/constants'
 
 export default function Schedule ({
   title,
@@ -28,7 +32,6 @@ export default function Schedule ({
       />
       <article>
         <PostHeader title={title} subtitle='Blog Article' publish={publish} />
-
         <figure>
           <Image
             src={eyecatch.url}
@@ -38,6 +41,8 @@ export default function Schedule ({
             height={eyecatch.height}
             sizes='(min-width: 1152px) 1152px, 100vw'
             priority
+            placeholder='blur'
+            blurDataURL={eyecatch.blurDataURL}
           />
         </figure>
 
@@ -47,9 +52,9 @@ export default function Schedule ({
               <ConvertBody contentHTML={content} />
             </PostBody>
           </TwoColumnMain>
-            <TwoColumnSidebar>
-              <PostCategories categories={categories} />
-            </TwoColumnSidebar>
+          <TwoColumnSidebar>
+            <PostCategories categories={categories} />
+          </TwoColumnSidebar>
         </TwoColumn>
       </article>
     </Container>
@@ -57,18 +62,23 @@ export default function Schedule ({
 }
 
 export async function getStaticProps () {
-  const slug = 'schedule'
+  const slug = 'micro'
 
   const post = await getPostBySlug(slug)
 
   const description = extractText(post.content)
+
+  const eyecatch = post.eyecatch ?? eyecatchLocal
+
+  const { base64 } = await getPlaiceholder(eyecatch.url)
+  eyecatch.blurDataURL = base64
 
   return {
     props: {
       title: post.title,
       publish: post.publishDate,
       content: post.content,
-      eyecatch: post.eyecatch,
+      eyecatch,
       categories: post.categories,
       description,
     },
